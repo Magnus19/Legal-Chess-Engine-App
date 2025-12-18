@@ -9,7 +9,7 @@ let board = [
 	["", "", "", "PAWN", "", "", "", ""],
 	["", "", "", "", "", "", "", ""],
 	["", "", "", "", "", "", "", ""],
-	["", "", "", "", "", "", "", ""],
+	["", "", "pawn", "", "", "", "", ""],
 	["PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN"],
 	["ROOK", "KNIGHT", "BISHOP", "QUEEN", "KING", "BISHOP", "KNIGHT", "ROOK"],
 ];
@@ -21,8 +21,12 @@ const gridParent = chessBoard.children;
 const Game = {
 	moves: [],
 	from: null,
+	to: null,
 	turn: "white",
 };
+
+// Event listener guard for pawnPromotionOverlay
+let listenerAdded = false;
 
 // Define Pieces
 const pawn = new Pawn("pawn");
@@ -150,13 +154,54 @@ const changePlayerTurn = () => {
 };
 
 // Special Rules
+const isPromotionEligible = (row, col) => {
+	const piece = board[row][col];
+	if (piece === "pawn" && row === 7) return true;
+	else if (piece === "PAWN" && row === 0) return true;
+	else return false;
+};
+
 const pawnPromotionOverlay = (row, col) => {
-	console.log(row);
 	if (board[row][col].toLowerCase() !== "pawn") return;
 	// Add a condition to check if it is white or black, and the appropriate row position to check if its at the right side
-	if (row === 7 || row === 0) {
-		promotionOverlay.style.display = "flex";
-	}
+	promotionOverlay.style.display = "flex";
+	console.log(`Before: ${listenerAdded}`);
+	promotionOverlay.addEventListener(
+		"click",
+		(event) => {
+			event = event.target;
+			if (!event.classList.contains("choice")) return;
+			pawnPromotion(row, col, event);
+			drawPieces();
+			promotionOverlay.style.display = "none";
+			listenerAdded = true;
+			console.log(`After: ${listenerAdded}`);
+		},
+		{ once: true } // Event listener triggers once then deletes. (Avoid duplication)
+	);
+};
+
+// Note: handle logic from pawnPromotion listener
+const pawnPromotion = (row, col, event) => {
+	// Use game.turn, but access the actual side that promoted by going backward. Ex: Game.turn = "white", then the actual promotion side is "black" since turn updated.
+	console.log(`Choice: ${event.id} Game.turn: ${Game.turn}`);
+	if (event.id === "choice1" && Game.turn === "black")
+		board[row][col] = "QUEEN";
+	else if (event.id === "choice2" && Game.turn === "black")
+		board[row][col] = "ROOK";
+	else if (event.id === "choice3" && Game.turn === "black")
+		board[row][col] = "BISHOP";
+	else if (event.id === "choice4" && Game.turn === "black")
+		board[row][col] = "KNIGHT";
+	else if (event.id === "choice1" && Game.turn === "white")
+		board[row][col] = "queen";
+	else if (event.id === "choice2" && Game.turn === "white")
+		board[row][col] = "rook";
+	else if (event.id === "choice3" && Game.turn === "white")
+		board[row][col] = "bishop";
+	else if (event.id === "choice4" && Game.turn === "white")
+		board[row][col] = "knight";
+	// Should we manually find the
 };
 
 // GUI Handling
@@ -177,6 +222,7 @@ const drawPossibleMoves = (moves) => {
 		for (let i = 0; i < moves.length; i++) {
 			if (
 				// The reason for the 0 and 2 is its accessing the X and Y in this format: Row Col
+				// Discovered new syntax sugar" for [var1, var2] use that for this for loop instead
 				grid.dataset.row === moves[i][0] &&
 				grid.dataset.col === moves[i][2]
 			) {
@@ -193,6 +239,7 @@ const drawPieces = () => {
 		}
 	}
 
+	// Loop through entire board to draw pieces depending on the pieces assigned to the array
 	for (let row = 0; row < board.length; row++) {
 		for (let col = 0; col < board[row].length; col++) {
 			const piece = board[row][col];
@@ -366,7 +413,7 @@ chessBoard.addEventListener("click", (event) => {
 	}
 
 	placePiece(row, col);
-	pawnPromotionOverlay(row, col);
+	if (isPromotionEligible(row, col)) pawnPromotionOverlay(row, col);
 	Game.moves = null;
 	// Reset the board visuals
 	for (let grid of gridParent) {
@@ -377,11 +424,6 @@ chessBoard.addEventListener("click", (event) => {
 	changePlayerTurn();
 	drawPieces();
 	printBoard();
-});
-
-promotionOverlay.addEventListener("click", (event) => {
-	event = event.target;
-	if (!event.classList.contains("choice")) return;
 });
 
 // Utility modules

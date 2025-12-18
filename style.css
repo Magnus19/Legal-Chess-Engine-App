@@ -162,6 +162,7 @@ body {
 	border: black solid 1px;
 	border-radius: 10%;
 	font-size: 36px;
+	cursor: pointer;
 }
 
 .choice-wrap-wrap:hover {
@@ -186,6 +187,5 @@ body {
 
 .choice {
 	height: 125px;
-	cursor: pointer;
 	width: 50%;
 }
