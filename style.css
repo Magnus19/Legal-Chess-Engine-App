@@ -1,0 +1,191 @@
+body {
+	margin: 0;
+	padding: 0;
+}
+
+.wrap {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+#chess-board {
+	padding: 1rem;
+	background-color: greenyellow;
+	flex-wrap: wrap;
+	width: 75%;
+}
+
+.dark-grid {
+	background-color: green;
+}
+
+.dark-grid:hover {
+	background-color: rgb(11, 185, 11);
+}
+
+.light-grid {
+	background-color: rgb(58, 247, 58);
+}
+
+.light-grid:hover {
+	background-color: rgb(46, 184, 46);
+}
+
+.grid {
+	border: black solid 1px;
+	width: 11%;
+	height: 125px;
+	cursor: pointer;
+}
+
+.possible-grid {
+	background-color: red;
+}
+
+.highlight-grid {
+	background-color: blue;
+}
+
+.black-pawn {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/B_Pawn.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.white-pawn {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/W_Pawn.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.black-rook {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/B_Rook.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.white-rook {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/W_Rook.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.black-bishop {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/B_Bishop.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.white-bishop {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/W_Bishop.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.black-knight {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/B_Knight.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.white-knight {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/W_Knight.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.black-queen {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/B_Queen.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.white-queen {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/W_Queen.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.black-king {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/B_King.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+.white-king {
+	background: no-repeat bottom/ 80% 150% url("/imgs/pieces/W_King.png");
+	width: 100%;
+	height: inherit;
+	pointer-events: none;
+}
+
+#promotion-overlay {
+	display: none;
+	height: 100%;
+	width: 100%;
+	background-color: rgba(255, 255, 255, 0.5);
+	padding: 1rem;
+	position: fixed;
+	flex-direction: column;
+}
+
+#title {
+	width: 100%;
+	font-size: 64px;
+}
+
+#choice-wrap {
+	width: 80%;
+	gap: 1%;
+	opacity: 100%;
+	padding: 1rem;
+}
+
+.choice-wrap-wrap {
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	background-color: brown;
+	border: black solid 1px;
+	border-radius: 10%;
+	font-size: 36px;
+}
+
+.choice-wrap-wrap:hover {
+	background-color: rgb(139, 40, 40);
+}
+
+#choice1 {
+	background: no-repeat bottom/ 50% 130% url("/imgs/pieces/W_Queen.png");
+}
+
+#choice2 {
+	background: no-repeat bottom/ 50% 150% url("/imgs/pieces/W_Rook.png");
+}
+
+#choice3 {
+	background: no-repeat bottom/ 50% 150% url("/imgs/pieces/W_Bishop.png");
+}
+
+#choice4 {
+	background: no-repeat bottom/ 50% 150% url("/imgs/pieces/W_Knight.png");
+}
+
+.choice {
+	height: 125px;
+	cursor: pointer;
+	width: 50%;
+}

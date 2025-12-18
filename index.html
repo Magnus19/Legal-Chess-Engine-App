@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<link rel="stylesheet" href="style.css" />
+		<title>Chess</title>
+	</head>
+	<body>
+		<div id="promotion-overlay" class="wrap">
+			<div id="title" class="wrap">Promote to:</div>
+			<div id="choice-wrap" class="wrap">
+				<div class="choice-wrap-wrap">
+					<div id="choice1" class="choice"></div>
+					<div class="choice-text">Queen</div>
+				</div>
+
+				<div class="choice-wrap-wrap">
+					<div id="choice2" class="choice"></div>
+					<div class="choice-text">Rook</div>
+				</div>
+
+				<div class="choice-wrap-wrap">
+					<div id="choice3" class="choice"></div>
+					<div class="choice-text">Bishop</div>
+				</div>
+
+				<div class="choice-wrap-wrap">
+					<div id="choice4" class="choice"></div>
+					<div class="choice-text">Knight</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="main-wrap" class="wrap">
+			<div id="chess-board" class="wrap"></div>
+		</div>
+
+		<script src="scripts/app.js" type="module"></script>
+		<script src="scripts/pieces.js" type="module"></script>
+	</body>
+</html>
