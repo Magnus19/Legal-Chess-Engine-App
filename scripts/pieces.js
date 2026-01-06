@@ -1,13 +1,13 @@
-import { board } from "./app.js";
+import { board, Game } from "./app.js";
 
 class ChessPieces {
 	constructor(name) {
 		this.name = name;
 	}
-	getPlayer(pieceName) {
-		if (pieceName != "") {
-			if (pieceName === pieceName.toLowerCase()) return "black";
-			else if (pieceName === pieceName.toUpperCase()) return "white";
+	getPlayer(piece) {
+		if (piece != "") {
+			if (piece === piece.toLowerCase()) return "black";
+			else if (piece === piece.toUpperCase()) return "white";
 		} else return null;
 	}
 	getEnemy(piece) {
@@ -21,103 +21,135 @@ class ChessPieces {
 	}
 }
 
+const PawnRule = {
+	intialPos: {
+		"1 0": false,
+		"1 1": false,
+		"1 2": false,
+		"1 3": false,
+		"1 4": false,
+		"1 5": false,
+		"1 6": false,
+		"1 7": false,
+		"6 0": false,
+		"6 1": false,
+		"6 2": false,
+		"6 3": false,
+		"6 4": false,
+		"6 5": false,
+		"6 6": false,
+		"6 7": false,
+	},
+	enPassantPos: {
+		"3 0": false,
+		"3 1": false,
+		"3 2": false,
+		"3 3": false,
+		"3 4": false,
+		"3 5": false,
+		"3 6": false,
+		"3 7": false,
+		"4 0": false,
+		"4 1": false,
+		"4 2": false,
+		"4 3": false,
+		"4 4": false,
+		"4 5": false,
+		"4 6": false,
+		"4 7": false,
+	},
+};
+
 class Pawn extends ChessPieces {
 	constructor(name) {
 		super(name);
 	}
 	genMoves(row, col) {
-		const intialPos = [
-			"1 0",
-			"1 1",
-			"1 2",
-			"1 3",
-			"1 4",
-			"1 5",
-			"1 6",
-			"1 7",
-			"6 0",
-			"6 1",
-			"6 2",
-			"6 3",
-			"6 4",
-			"6 5",
-			"6 6",
-			"6 7",
-		];
 		// Get the actual this.name of the piece
-		const pieceName = board[row][col];
+		const piece = board[row][col];
+		// Get player to determine how piece moves.
+		let player = this.getPlayer(piece);
+		let enemy = null;
+		player === "white" ? (enemy = "black") : (enemy = "white");
+		let direction;
+		player === "white" ? (direction = -1) : (direction = 1);
+
 		// This will only generate the moves which the board will reference.
 		let possibleMoves = [];
 		row = Number(row);
 		col = Number(col);
 
+		const iniPos = PawnRule.intialPos;
+		// const passPos = PawnRule.enPassantPos;
+
+		// // enPassant
+		// for (let key of Object.keys(passPos)) {
+		// 	// Out of bounds guard
+		// 	if (col + 1 >= board.length || col - 1 <= -1) break;
+		// 	if (key !== Game.to) continue;
+		// 	// if enPassant move was once possible but never done, skip
+		// 	if (passPos[key]) continue;
+
+		// 	// Another out of bounds guard
+		// 	if (Number(Game.to[2]) + 1 < board.length) {
+		// 		if (
+		// 			this.getEnemy(board[Number(Game.to[0])][Number(Game.to[2]) + 1]) ===
+		// 			player
+		// 		) {
+		// 			possibleMoves.push(`${row + 1 * direction} ${col - 1}`);
+		// 			passPos[key] = true;
+		// 			Game.enPassant = true;
+		// 		}
+		// 	}
+
+		// 	if (Number(Game.to[2]) - 1 > -1) {
+		// 		if (
+		// 			this.getEnemy(board[Number(Game.to[0])][Number(Game.to[2]) - 1]) ===
+		// 			player
+		// 		) {
+		// 			possibleMoves.push(`${row + 1 * direction} ${col + 1}`);
+		// 			passPos[key] = true;
+		// 			Game.enPassant = true;
+		// 		}
+		// 	}
+		// 	break;
+		// }
+
 		let isFirstMove = false;
-		for (let i = 0; i < intialPos.length; i++) {
-			const thisCoord = intialPos[i];
-			const initialY = Number(thisCoord[0]);
-			const initialX = Number(thisCoord[2]);
+		for (let key of Object.keys(iniPos)) {
+			const iniX = Number(key[2]);
 
 			// Black side
-			if (
-				row === initialY &&
-				col === initialX &&
-				i < 8 &&
-				this.getPlayer(pieceName) === "black"
-			)
+			if (row === 1 && col === iniX && this.getPlayer(piece) === "black")
 				isFirstMove = true;
-			else if (
-				row === initialY &&
-				col === initialX &&
-				i >= 8 &&
-				this.getPlayer(pieceName) === "white"
-			) {
+			else if (row === 6 && col === iniX && this.getPlayer(piece) === "white") {
 				isFirstMove = true;
 			}
 		}
 
-		// Get player to determine how piece moves.
-		let player = this.getPlayer(pieceName);
-		let enemy = null;
-		player === "white" ? (enemy = "black") : (enemy = "white");
-		let direction;
-		player === "white" ? (direction = -1) : (direction = 1);
-		// If pawn exceeds at the end of the row no more moves are possible (Take note pawn actually promotes to queen at this point)
-		// Take note that implementing this in other pieces might be bad because some moves can move backwards and stuff SO YOU HAVE TO IMPLEMENT THIS DURING THE CALCULATION OF THE MOVES
+		// If statement guard to check if row + 1 is out of bounds
 		if (row + 1 * direction >= board.length || row + 1 * direction < 0) return;
 
-		if (!isFirstMove) {
-			// If statement guard to check if row + 1 is out of bounds
-			// if (row + 1 * direction >= board.length)
-			// Check if there is piece infront of it
-			if (board[row + 1 * direction][col] === "")
-				possibleMoves.push(`${row + 1 * direction} ${col}`);
-			// Eat moves
+		if (board[row + 1 * direction][col] === "")
+			possibleMoves.push(`${row + 1 * direction} ${col}`);
+		// Eat moves
+		if (
+			board[row + 1 * direction][col - 1] !== undefined &&
+			this.getEnemy(board[row + 1 * direction][col - 1]) === enemy
+		)
+			possibleMoves.push(`${row + 1 * direction} ${col - 1}`);
+		if (
+			board[row + 1 * direction][col + 1] !== undefined &&
+			this.getEnemy(board[row + 1 * direction][col + 1]) === enemy
+		)
+			possibleMoves.push(`${row + 1 * direction} ${col + 1}`);
+
+		if (isFirstMove) {
 			if (
-				board[row + 1 * direction][col - 1] !== undefined &&
-				this.getEnemy(board[row + 1 * direction][col - 1]) === enemy
+				board[row + 2 * direction][col] === "" &&
+				board[row + 1 * direction][col] === ""
 			)
-				possibleMoves.push(`${row + 1 * direction} ${col - 1}`);
-			if (
-				board[row + 1 * direction][col + 1] !== undefined &&
-				this.getEnemy(board[row + 1 * direction][col + 1])
-			)
-				possibleMoves.push(`${row + 1 * direction} ${col + 1}`);
-		} else {
-			if (board[row + 1 * direction][col] === "")
-				possibleMoves.push(`${row + 1 * direction} ${col}`);
-			if (board[row + 2 * direction][col] === "")
 				possibleMoves.push(`${row + 2 * direction} ${col}`);
-			// Eat moves
-			if (
-				board[row + 1 * direction][col - 1] !== undefined &&
-				this.getEnemy(board[row + 1 * direction][col - 1]) === enemy
-			)
-				possibleMoves.push(`${row + 1 * direction} ${col - 1}`);
-			if (
-				board[row + 1 * direction][col + 1] !== undefined &&
-				this.getEnemy(board[row + 1 * direction][col + 1])
-			)
-				possibleMoves.push(`${row + 1 * direction} ${col + 1}`);
 		}
 
 		return possibleMoves;
@@ -129,12 +161,12 @@ class Rook extends ChessPieces {
 		super(name);
 	}
 	genMoves(row, col) {
-		const pieceName = board[row][col];
+		const piece = board[row][col];
 		let possibleMoves = [];
 		row = Number(row);
 		col = Number(col);
 
-		let player = this.getPlayer(pieceName);
+		let player = this.getPlayer(piece);
 		let enemy = null;
 		player === "white" ? (enemy = "black") : (enemy = "white");
 
@@ -168,8 +200,6 @@ class Rook extends ChessPieces {
 			}
 			newRow--;
 		}
-		// Reset val since this won't be used anymore? (I also don't get why I did this)
-		newRow = null;
 
 		// HORIZONTAL
 		let newCol = col + 1;
@@ -201,7 +231,6 @@ class Rook extends ChessPieces {
 			}
 			newCol--;
 		}
-		newCol = null;
 		return possibleMoves;
 	}
 }
@@ -211,12 +240,12 @@ class Bishop extends ChessPieces {
 		super(name);
 	}
 	genMoves(row, col) {
-		const pieceName = board[row][col];
+		const piece = board[row][col];
 		let possibleMoves = [];
 		row = Number(row);
 		col = Number(col);
 
-		let player = this.getPlayer(pieceName);
+		let player = this.getPlayer(piece);
 		let enemy = null;
 		player === "white" ? (enemy = "black") : (enemy = "white");
 
@@ -299,12 +328,12 @@ class Knight extends ChessPieces {
 		super(name);
 	}
 	genMoves(row, col) {
-		const pieceName = board[row][col];
+		const piece = board[row][col];
 		let possibleMoves = [];
 		row = Number(row);
 		col = Number(col);
 
-		let player = this.getPlayer(pieceName);
+		let player = this.getPlayer(piece);
 		let enemy = null;
 		player === "white" ? (enemy = "black") : (enemy = "white");
 		let direction;
@@ -344,12 +373,12 @@ class Queen extends ChessPieces {
 		super(name);
 	}
 	genMoves(row, col) {
-		const pieceName = board[row][col];
+		const piece = board[row][col];
 		let possibleMoves = [];
 		row = Number(row);
 		col = Number(col);
 
-		let player = this.getPlayer(pieceName);
+		let player = this.getPlayer(piece);
 		let enemy = null;
 		player === "white" ? (enemy = "black") : (enemy = "white");
 
@@ -456,8 +485,6 @@ class Queen extends ChessPieces {
 			}
 			newRow--;
 		}
-		// Reset val since this won't be used anymore? (I also don't get why I did this)
-		newRow = null;
 
 		// HORIZONTAL
 		newCol = col + 1;
@@ -489,8 +516,6 @@ class Queen extends ChessPieces {
 			}
 			newCol--;
 		}
-		newCol = null;
-
 		return possibleMoves;
 	}
 }
@@ -500,12 +525,12 @@ class King extends ChessPieces {
 		super(name);
 	}
 	genMoves(row, col) {
-		const pieceName = board[row][col];
+		const piece = board[row][col];
 		let possibleMoves = [];
 		row = Number(row);
 		col = Number(col);
 
-		let player = this.getPlayer(pieceName);
+		let player = this.getPlayer(piece);
 		let enemy = null;
 		player === "white" ? (enemy = "black") : (enemy = "white");
 

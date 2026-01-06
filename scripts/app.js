@@ -6,10 +6,10 @@ const chessBoard = document.querySelector("#chess-board");
 let board = [
 	["rook", "knight", "bishop", "queen", "king", "bishop", "knight", "rook"],
 	["pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn", "pawn"],
-	["", "", "", "PAWN", "", "", "", ""],
 	["", "", "", "", "", "", "", ""],
 	["", "", "", "", "", "", "", ""],
-	["", "", "pawn", "", "", "", "", ""],
+	["", "", "", "", "", "", "", ""],
+	["", "", "", "", "", "", "", ""],
 	["PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN"],
 	["ROOK", "KNIGHT", "BISHOP", "QUEEN", "KING", "BISHOP", "KNIGHT", "ROOK"],
 ];
@@ -21,8 +21,9 @@ const gridParent = chessBoard.children;
 const Game = {
 	moves: [],
 	from: null,
-	to: null,
+	to: null, // to acts as the last move that was done
 	turn: "white",
+	enPassantTarget: null,
 };
 
 // Event listener guard for pawnPromotionOverlay
@@ -128,19 +129,59 @@ const getMovesByPiece = (piece, row, col) => {
 	}
 };
 
+const getPiecePlayer = (piece) => {
+	if (piece === piece.toLowerCase()) return "black";
+	else if (piece === piece.toUpperCase()) return "white";
+};
+
 const selectPiece = (row, col) => {
-	console.log("selecting...");
 	Game.from = `${row} ${col}`;
 };
 
-const placePiece = (row, col) => {
-	console.log("placing...");
+// Look out for this, MAY CONFLICT WITH OTHER MOVE TYPES IF THIS IS TOO AMBIGUOUS
+const isNormalCapture = (enemyPiece) => {
+	if (getPiecePlayer(enemyPiece) !== Game.turn) return true;
+	else return false;
+};
+
+const isEnPassant = (row, col, piece) => {
+	if (!Game.enPassantTarget) return false;
+	if (piece.toLowerCase() !== "pawn") return false;
+	if (col !== Number(Game.enPassantTarget[2])) return false;
+	if (
+		row !==
+		Number(Game.enPassantTarget[0]) +
+			(getPiecePlayer(piece) === "black" ? 1 : -1)
+	) {
+		return false;
+	}
+	return true;
+};
+
+const movePiece = (row, col) => {
 	const fromY = Game.from[0];
 	const fromX = Game.from[2];
+	const piece = board[fromY][fromX];
+	const enemyPiece = board[row][col];
+
+	// For normal captures
+	if (isNormalCapture(enemyPiece)) {
+		// Make the enemy piece blank
+		board[row][col] = "";
+		// Add certain things to track enemy score or add history...
+	}
+
+	// For en passant
+	if (isEnPassant(row, col, piece)) {
+		board[Number(Game.enPassantTarget[0])][Number(Game.enPassantTarget[2])] =
+			"";
+	}
+
+	// Store information of last move to be saved
+	Game.to = `${row} ${col}`;
 
 	board[row][col] = board[fromY][fromX];
-	board[fromY][fromX] = "";
-	Game.from = null;
+	board[fromY][fromX] = ""; // Reset the last position to avoid duplication
 };
 
 const changePlayerTurn = () => {
@@ -161,30 +202,9 @@ const isPromotionEligible = (row, col) => {
 	else return false;
 };
 
-const pawnPromotionOverlay = (row, col) => {
-	if (board[row][col].toLowerCase() !== "pawn") return;
-	// Add a condition to check if it is white or black, and the appropriate row position to check if its at the right side
-	promotionOverlay.style.display = "flex";
-	console.log(`Before: ${listenerAdded}`);
-	promotionOverlay.addEventListener(
-		"click",
-		(event) => {
-			event = event.target;
-			if (!event.classList.contains("choice")) return;
-			pawnPromotion(row, col, event);
-			drawPieces();
-			promotionOverlay.style.display = "none";
-			listenerAdded = true;
-			console.log(`After: ${listenerAdded}`);
-		},
-		{ once: true } // Event listener triggers once then deletes. (Avoid duplication)
-	);
-};
-
 // Note: handle logic from pawnPromotion listener
 const pawnPromotion = (row, col, event) => {
 	// Use game.turn, but access the actual side that promoted by going backward. Ex: Game.turn = "white", then the actual promotion side is "black" since turn updated.
-	console.log(`Choice: ${event.id} Game.turn: ${Game.turn}`);
 	if (event.id === "choice1" && Game.turn === "black")
 		board[row][col] = "QUEEN";
 	else if (event.id === "choice2" && Game.turn === "black")
@@ -201,10 +221,76 @@ const pawnPromotion = (row, col, event) => {
 		board[row][col] = "bishop";
 	else if (event.id === "choice4" && Game.turn === "white")
 		board[row][col] = "knight";
-	// Should we manually find the
+};
+
+const isPawnMoveTwoSquare = () => {
+	const toY = Number(Game.to[0]);
+	const toX = Number(Game.to[2]);
+	const fromY = Number(Game.from[0]);
+	const piece = board[toY][toX];
+
+	let direction;
+	getPiecePlayer(piece) === "black" ? (direction = 1) : (direction = -1);
+
+	if (toY === fromY + 2 * direction) {
+		return true;
+	}
+	return false;
+};
+
+const updateEnPassantSquare = () => {
+	if (!Game.to) return false;
+	const toY = Number(Game.to[0]);
+	const toX = Number(Game.to[2]);
+	const piece = board[toY][toX];
+
+	Game.enPassantTarget = null;
+
+	if (piece.toLowerCase() !== "pawn") return;
+
+	if (isPawnMoveTwoSquare()) Game.enPassantTarget = `${toY} ${toX}`;
+	return;
+};
+
+const pushEnPassantMove = (row, col) => {
+	const piece = board[row][col];
+	if (getPiecePlayer(piece) !== Game.turn) return;
+	if (!Game.enPassantTarget) return;
+
+	let direction;
+	getPiecePlayer(piece) === "black" ? (direction = 1) : (direction = -1);
+
+	const targetRow = Number(Game.enPassantTarget[0]);
+	const targetCol = Number(Game.enPassantTarget[2]);
+
+	if (targetRow !== row) return;
+	if (Math.abs(targetCol - col) !== 1) return;
+
+	const moveRow = row + direction;
+	const moveCol = targetCol;
+
+	Game.moves.push(`${moveRow} ${moveCol}`);
 };
 
 // GUI Handling
+const pawnPromotionOverlay = (row, col) => {
+	if (board[row][col].toLowerCase() !== "pawn") return;
+	// Add a condition to check if it is white or black, and the appropriate row position to check if its at the right side
+	promotionOverlay.style.display = "flex";
+	promotionOverlay.addEventListener(
+		"click",
+		(event) => {
+			event = event.target;
+			if (!event.classList.contains("choice")) return;
+			pawnPromotion(row, col, event);
+			drawPieces();
+			promotionOverlay.style.display = "none";
+			listenerAdded = true;
+		},
+		{ once: true } // Event listener triggers once then deletes. (Avoid duplication)
+	);
+};
+
 const highlightGrid = (row, col) => {
 	for (let grid of gridParent) {
 		grid.classList.remove("highlight-grid");
@@ -374,14 +460,14 @@ chessBoard.addEventListener("click", (event) => {
 			for (let grid of gridParent) grid.classList.remove("possible-grid");
 			return highlightGrid(row, col);
 		}
-		// No piece is selected equivalent to ""
+		// No piece is selected
 		if (!piece) return;
 
 		selectPiece(row, col);
 		highlightGrid(row, col);
 
 		Game.moves = getMovesByPiece(piece, row, col);
-		// This is specifically for pawn not having the ability to promote yet, so its stuck at its positon, leads to no crashes.
+		pushEnPassantMove(row, col);
 		if (!Game.moves) return (Game.from = null);
 		drawPossibleMoves(Game.moves);
 		return;
@@ -393,6 +479,7 @@ chessBoard.addEventListener("click", (event) => {
 		highlightGrid(row, col);
 
 		Game.moves = getMovesByPiece(piece, row, col);
+		pushEnPassantMove(row, col);
 		if (!Game.moves) return (Game.from = null);
 		drawPossibleMoves(Game.moves);
 		return;
@@ -412,9 +499,11 @@ chessBoard.addEventListener("click", (event) => {
 		}
 	}
 
-	placePiece(row, col);
+	movePiece(row, col);
+	updateEnPassantSquare();
 	if (isPromotionEligible(row, col)) pawnPromotionOverlay(row, col);
 	Game.moves = null;
+	Game.from = null;
 	// Reset the board visuals
 	for (let grid of gridParent) {
 		grid.classList.remove("highlight-grid");
@@ -446,4 +535,4 @@ printBoard();
 // MISTAKES AND LESSONS
 // ATTRIBUTES LIKE DATASET.* IS CONSIDERED A STRING SO BE WARY OF PARSING IT TO A NUMBER IF REQUIRED.
 
-export { board };
+export { board, Game };
