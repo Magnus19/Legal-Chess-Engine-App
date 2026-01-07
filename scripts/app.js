@@ -198,6 +198,7 @@ const movePiece = (row, col) => {
 				console.log(rook);
 				board[row][col + 1 * (col === 2 ? 1 : -1)] = rook;
 				board[row][col + kingOrQueenSide] = "";
+				Game.castleSquares = [];
 			}
 		});
 	}
