@@ -11,7 +11,7 @@ let board = [
 	["", "", "", "", "", "", "", ""],
 	["", "", "", "", "", "", "", ""],
 	["PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN", "PAWN"],
-	["ROOK", "KNIGHT", "BISHOP", "QUEEN", "KING", "BISHOP", "KNIGHT", "ROOK"],
+	["ROOK", "", "", "", "KING", "", "", "ROOK"],
 ];
 
 // Create a global access for each single grids
@@ -24,6 +24,11 @@ const Game = {
 	to: null, // to acts as the last move that was done
 	turn: "white",
 	enPassantTarget: null,
+	castleSquares: [],
+	castleRights: {
+		black: { kingSide: false, queenSide: false },
+		white: { kingSide: false, queenSide: false },
+	},
 };
 
 // Event listener guard for pawnPromotionOverlay
@@ -129,6 +134,7 @@ const getMovesByPiece = (piece, row, col) => {
 	}
 };
 
+// Helper Function
 const getPiecePlayer = (piece) => {
 	if (piece === piece.toLowerCase()) return "black";
 	else if (piece === piece.toUpperCase()) return "white";
@@ -158,6 +164,12 @@ const isEnPassant = (row, col, piece) => {
 	return true;
 };
 
+const isCastle = (piece) => {
+	if (!Game.castleSquares) return false;
+	if (piece.toLowerCase() !== "king") return false;
+	return true;
+};
+
 const movePiece = (row, col) => {
 	const fromY = Game.from[0];
 	const fromX = Game.from[2];
@@ -177,9 +189,23 @@ const movePiece = (row, col) => {
 			"";
 	}
 
+	if (isCastle(piece)) {
+		Game.castleSquares.forEach((coords) => {
+			console.log(`row: ${row} row coords: ${coords[0]}`);
+			if (row === Number(coords[0]) && col === Number(coords[2])) {
+				const kingOrQueenSide = col === 2 ? -2 : 1;
+				const rook = board[row][col + kingOrQueenSide];
+				console.log(rook);
+				board[row][col + 1 * (col === 2 ? 1 : -1)] = rook;
+				board[row][col + kingOrQueenSide] = "";
+			}
+		});
+	}
+
 	// Store information of last move to be saved
 	Game.to = `${row} ${col}`;
 
+	// Universally place the piece from its position to the clicked place regardless of what type of move was done
 	board[row][col] = board[fromY][fromX];
 	board[fromY][fromX] = ""; // Reset the last position to avoid duplication
 };
@@ -272,6 +298,70 @@ const pushEnPassantMove = (row, col) => {
 	Game.moves.push(`${moveRow} ${moveCol}`);
 };
 
+const isSquaresVacant = (color) => {
+	const row = color === "white" ? 7 : 0;
+	const requiredVacantSquares = {
+		queenSide: [1, 2, 3],
+		kingSide: [5, 6],
+	};
+
+	Game.castleRights[color].queenSide = requiredVacantSquares.queenSide.every(
+		(col) => board[row][col] === ""
+	);
+
+	Game.castleRights[color].kingSide = requiredVacantSquares.kingSide.every(
+		(col) => board[row][col] === ""
+	);
+};
+
+const updateCastleRights = () => {
+	const fromX = Number(Game.from[2]);
+	const toY = Number(Game.to[0]);
+	const toX = Number(Game.to[2]);
+	const piece = board[toY][toX];
+	const color = getPiecePlayer(piece);
+	isSquaresVacant(color);
+
+	if (piece.toLowerCase() === "king") {
+		Game.castleRights[color].queenSide = false;
+		Game.castleRights[color].kingSide = false;
+	}
+
+	if (piece.toLowerCase() === "rook") {
+		if (fromX === 0) Game.castleRights[color].queenSide = false;
+		else if (fromX === 7) Game.castleRights[color].kingSide = false;
+	}
+	console.log(Game.castleRights[color].kingSide);
+};
+
+const pushCastleMove = (row, col) => {
+	const piece = board[row][col];
+	if (piece.toLowerCase() !== "king") return;
+	// if no squares are blocking
+	if (piece === "king") {
+		if (Game.castleRights.black.queenSide === true) {
+			Game.moves.push(`${0} ${2}`);
+			Game.castleSquares.push(`${0} ${2}`);
+		}
+		if (Game.castleRights.black.kingSide === true) {
+			Game.moves.push(`${0} ${6}`);
+			Game.castleSquares.push(`${0} ${6}`);
+		}
+	} else if (piece === "KING") {
+		if (Game.castleRights.white.queenSide === true) {
+			Game.moves.push(`${7} ${2}`);
+			Game.castleSquares.push(`${7} ${2}`);
+		}
+
+		if (Game.castleRights.white.kingSide === true) {
+			Game.moves.push(`${7} ${6}`);
+			Game.castleSquares.push(`${7} ${6}`);
+		}
+	}
+	console.log(Game.castleSquares);
+	// (next time) if checkmate
+};
+
 // GUI Handling
 const pawnPromotionOverlay = (row, col) => {
 	if (board[row][col].toLowerCase() !== "pawn") return;
@@ -323,9 +413,9 @@ const drawPieces = () => {
 		for (let anotherGrid of grid.children) {
 			anotherGrid.remove();
 		}
-	}
+	} // Reset grids
 
-	// Loop through entire board to draw pieces depending on the pieces assigned to the array
+	// Loop through entire board to draw pieces
 	for (let row = 0; row < board.length; row++) {
 		for (let col = 0; col < board[row].length; col++) {
 			const piece = board[row][col];
@@ -468,6 +558,7 @@ chessBoard.addEventListener("click", (event) => {
 
 		Game.moves = getMovesByPiece(piece, row, col);
 		pushEnPassantMove(row, col);
+		pushCastleMove(row, col);
 		if (!Game.moves) return (Game.from = null);
 		drawPossibleMoves(Game.moves);
 		return;
@@ -480,6 +571,7 @@ chessBoard.addEventListener("click", (event) => {
 
 		Game.moves = getMovesByPiece(piece, row, col);
 		pushEnPassantMove(row, col);
+		pushCastleMove(row, col);
 		if (!Game.moves) return (Game.from = null);
 		drawPossibleMoves(Game.moves);
 		return;
@@ -501,6 +593,7 @@ chessBoard.addEventListener("click", (event) => {
 
 	movePiece(row, col);
 	updateEnPassantSquare();
+	updateCastleRights();
 	if (isPromotionEligible(row, col)) pawnPromotionOverlay(row, col);
 	Game.moves = null;
 	Game.from = null;

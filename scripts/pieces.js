@@ -40,24 +40,6 @@ const PawnRule = {
 		"6 6": false,
 		"6 7": false,
 	},
-	enPassantPos: {
-		"3 0": false,
-		"3 1": false,
-		"3 2": false,
-		"3 3": false,
-		"3 4": false,
-		"3 5": false,
-		"3 6": false,
-		"3 7": false,
-		"4 0": false,
-		"4 1": false,
-		"4 2": false,
-		"4 3": false,
-		"4 4": false,
-		"4 5": false,
-		"4 6": false,
-		"4 7": false,
-	},
 };
 
 class Pawn extends ChessPieces {
